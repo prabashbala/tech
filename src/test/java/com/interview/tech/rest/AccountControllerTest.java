@@ -1,6 +1,8 @@
 package com.interview.tech.rest;
 
 import com.interview.tech.dao.Account;
+import com.interview.tech.dao.Customer;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,14 @@ public class AccountControllerTest
   @LocalServerPort
   private int port;
 
+  private Fixture fixture;
+
+  @Before
+  public void setUp()
+  {
+    fixture = new Fixture();
+  }
+
   @Autowired
   private AccountController accountController;
 
@@ -32,7 +42,7 @@ public class AccountControllerTest
   private TestRestTemplate restTemplate;
 
   @Test
-  public void contexLoads() throws Exception
+  public void contexLoads()
   {
     assertThat(accountController).isNotNull();
   }
@@ -40,27 +50,69 @@ public class AccountControllerTest
   @Test
   public void whenPOSTRequestToAddCustomerIsValidThenReturnSuccess()
   {
-    String newURL = urlAdd.replace("8080", String.valueOf(port));
-    Account account = new Account();
-    account.setAccountNumber(1);
-    List<String> customerIds = new ArrayList<>();
-    customerIds.add("1");
-    customerIds.add("2");
-    customerIds.add("3");
-
-    account.setCustomerIds(customerIds);
-    String response = this.restTemplate.postForObject(newURL, account, String.class);
-    assertTrue(response.equalsIgnoreCase("SUCCESS"));
+    fixture.givenEndpointUrlIsSet("8080", urlAdd);
+    fixture.givenAccountDetailsIsSet();
+    fixture.givenCustomerIsAvailable();
+    fixture.whenGetCustomerRequestIsSent();
+    fixture.thenResponseIsValid();
   }
 
   @Test
   public void whenPOSTRequestToGetCustomerIsValidThenReturnSuccess()
   {
-    String newURL = urlGet.replace("8080", String.valueOf(port));
-    Account account = new Account();
-    account.setId(new Long("12542856"));
+    fixture.givenEndpointUrlIsSet("8080", urlGet);
+    fixture.givenAccountIdIsSet();
+    fixture.whenGetCustomerRequestIsSent();
+    fixture.thenResponseIsValid();
+  }
 
-    String response = this.restTemplate.postForObject(newURL, account, String.class);
-    assertTrue(response.equalsIgnoreCase("SUCCESS"));
+  class Fixture
+  {
+    private String response;
+    private Account account;
+    private String endPintURL;
+
+    private void givenCustomerIsAvailable()
+    {
+      account = new Account();
+      account.setAccountNumber(1);
+      List<Customer> customers = new ArrayList<>();
+      customers.add(new Customer("Praba","Bala",null));
+      customers.add(new Customer("Eric","Chan",null));
+      customers.add(new Customer("Mark","Taylor",null));
+      account.setCustomers(customers);
+    }
+
+    public void whenGetCustomerRequestIsSent()
+    {
+      response = restTemplate.postForObject(endPintURL, account, String.class);
+    }
+
+    public void givenAccountDetailsIsSet()
+    {
+      account = new Account();
+      account.setId(new Long("12542856"));
+      account = new Account();
+      account.setAccountNumber(1);
+
+    }
+
+    public void thenResponseIsValid()
+    {
+      assertTrue(response.contains("customerIds"));
+    }
+
+    public void givenEndpointUrlIsSet(String targetPort, String endPointUrl)
+    {
+      endPintURL = endPointUrl.replace(targetPort, String.valueOf(port));
+    }
+
+    public void givenAccountIdIsSet()
+    {
+      account = new Account();
+      account.setId(Long.valueOf(2));
+    }
+
+
   }
 }

@@ -46,6 +46,6 @@ public class CustomerControllerTest
 
    this.restTemplate.postForObject(newURL, customer, String.class);
     String response = this.restTemplate.postForObject(newURL, customer, String.class);
-    assertTrue(response.equalsIgnoreCase("SUCCESS"));
+    assertTrue(response.contains("accountIds"));
   }
 }
